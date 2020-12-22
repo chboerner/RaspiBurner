@@ -1,0 +1,15 @@
+[Unit]
+Description=Provisioning OneShot Service
+Requires=network.target default.target
+After=default.target
+
+[Service]
+Type=oneshot
+ExecStart=/base_provision.sh
+RemainAfterExit=true
+Restart=no
+StandardOutput=append:/var/log/provisioning.log
+StandardError=append:/var/log/provisioning.log
+
+[Install]
+WantedBy=default.target
