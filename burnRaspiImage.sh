@@ -13,12 +13,13 @@ fstype=""
 
 usage() {
   cat <<EOF
-Usage $0 -D <disk device> -H <hostname>
+Usage $0 <options>
 
 -D <disk device>      Device name with RaspberryPiOS. Only device, not file systems!
                       Ex. /dev/sdd instead of /dev/sdd1
 -I <image>            RaspberryPiOS image which should be written to the disk.
 -S <size>             Size of secondary partition in Gigabytes (created at end of disk)
+
 EOF
   exit ${1:-0}
 }

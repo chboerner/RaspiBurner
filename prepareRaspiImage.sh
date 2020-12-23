@@ -21,7 +21,7 @@ source ${scripts_basedir}/shared_functions.sh
 
 usage() {
   cat <<EOF
-Usage $0 -D <disk device> -H <hostname>
+Usage $0 <options>
 
 Image options:
 -I <disk image>           Raw OS Image with RasperryPiOS that should be modified.
@@ -31,7 +31,7 @@ RaspberryPi settings:
 -H <hostname>             Hostname to be configured for this OS image without domain portion
 -s <ssh key>              Use this ssh key instead of the configured default ($v_sshkey) for user $v_username
 
-Autodeploy options:
+Auto provision options:
 -r <GitHub Repository>    GitHub Repository containing the provisioning code
 -k <GitHub Deploy Key>    Deployment key to be used for private/protected repositories
 -p <Provision base dir>   Directory where the GitHub repository is cloned (default: $v_provision_basedir)
