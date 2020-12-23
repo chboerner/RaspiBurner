@@ -19,8 +19,3 @@ fi
 
 echo "Running Playbook "${provision_basedir}/${provision_playbook}""
 runuser -u ${provision_user} -c ansible-playbook "${provision_basedir}/${provision_playbook}"
-
-if [ -f "/.provisioning.done" ]; then
-  echo "Found done-file. Disabling Provisioning Job"
-  systemctl disable base_provision
-fi
