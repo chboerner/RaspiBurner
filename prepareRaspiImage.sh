@@ -162,7 +162,7 @@ function prepare_rootfs() {
       echo "No GitHub deploy key specified. The provisioner GitHub repository must be set to public, otherwise cloning the repo will fail."
     fi
 
-    if [[ $github_repo =~ github.com:.*.git$ ]]; then
+    if [[ $v_provision_gh_repo =~ github.com:.*.git$ ]]; then
       echo "Adding GitHub ssh fingerprint to known_hosts file"
       ssh-keyscan github.com >> "${fs_base}/home/$v_username/.ssh/known_hosts"
       set_ssh_permissions
