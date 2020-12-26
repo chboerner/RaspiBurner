@@ -165,6 +165,8 @@ function prepare_rootfs() {
     echo "Copying provisioner service file"
     cp -va $scripts_basedir/files/base_provision.service ${fs_base}/lib/systemd/system/
     cp -va $scripts_basedir/files/base_provision.sh ${fs_base}/
+    chmod +x ${fs_base}/base_provision.sh
+
     if $v_autoprovision; then
       echo "Linking provision oneshot service as wanted by multi-user"
       cd "${fs_base}/lib/systemd/system/multi-user.target.wants" &&
