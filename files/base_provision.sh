@@ -3,11 +3,15 @@ set -e
 
 source /.provision.conf
 
-echo "Cloning Git repository $github_repo to $provision_basedir"
-mkdir -p "${provision_basedir}"
-provision_group=$(getent group $(id -g ${provision_user}) | cut -d ':' -f 1)
-chown -R ${provision_user}:${provision_group} "${provision_basedir}"
-runuser -u ${provision_user} -- git clone --branch master "${github_repo}" "${provision_basedir}"
+if [ ! -e "${provision_basedir}/.git" ]; then
+  echo "Cloning Git repository $github_repo to $provision_basedir"
+  mkdir -p "${provision_basedir}"
+  provision_group=$(getent group $(id -g ${provision_user}) | cut -d ':' -f 1)
+  chown -R ${provision_user}:${provision_group} "${provision_basedir}"
+  runuser -u ${provision_user} -- git clone --branch master "${github_repo}" "${provision_basedir}"
+else
+  cd "${provision_basedir}" && runuser -u ${provision_user} -- git pull
+fi
 
 echo "Checking if Ansible is installed"
 if [ $(which ansible-playbook | wc -l) -eq 0 ]; then
@@ -18,4 +22,4 @@ else
 fi
 
 echo "Running Playbook "${provision_basedir}/${provision_playbook}""
-runuser -u ${provision_user} -c ansible-playbook "${provision_basedir}/${provision_playbook}"
+runuser -u ${provision_user} -- ansible-playbook "${provision_basedir}/${provision_playbook}"
