@@ -29,4 +29,4 @@ else
 fi
 
 echo "Running Playbook "${provision_basedir}/${provision_playbook}""
-runuser -u ${provision_user} -- ansible-playbook "${provision_basedir}/${provision_playbook}" >> /tmp/provision.$(date +%F_%X) 2>&1
+runuser -u ${provision_user} -- ansible-playbook -vv "${provision_basedir}/${provision_playbook}" >> /tmp/provision.$(date +%F_%X) 2>&1
