@@ -16,6 +16,13 @@ fi
 echo "Checking if Ansible is installed"
 if [ $(which ansible-playbook | wc -l) -eq 0 ]; then
   echo "Installing Ansible"
+
+  # wait until `apt-get updated` is done to prevent race condition with apt-daily.service
+  while ! (systemctl list-units --all apt-daily.service | egrep -q '(dead|failed)')
+  do
+    echo "Waiting to get APT lock..."
+    sleep 1;
+  done
   sudo apt install -y ansible
 else
   echo "Nothing to do. Ansible was found."
