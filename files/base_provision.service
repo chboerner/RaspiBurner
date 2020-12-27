@@ -6,6 +6,7 @@ Requires=network.target network-online.target local-fs.target
 
 [Service]
 Type=oneshot
+ExecStartPre=-/usr/lib/apt/apt-helper wait-online
 ExecStart=/base_provision.sh
 RemainAfterExit=true
 Restart=no
