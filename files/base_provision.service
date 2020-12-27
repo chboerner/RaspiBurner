@@ -2,6 +2,7 @@
 Description=Provisioning OneShot Service
 Requires=network.target default.target
 After=default.target
+Requires=network.target network-online.target local-fs.target
 
 [Service]
 Type=oneshot
