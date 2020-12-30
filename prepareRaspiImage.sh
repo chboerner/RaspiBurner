@@ -43,7 +43,7 @@ EOF
   exit ${1:-0}
 }
 
-while getopts I:T:H:s:r:k:P:p:aqh opt; do
+while getopts I:T:H:s:r:k:p:P:ah opt; do
   case $opt in
   I)
     v_sourceimage=$OPTARG
