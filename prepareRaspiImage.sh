@@ -30,6 +30,9 @@ Image options:
 RaspberryPi settings:
 -H <hostname>             Hostname to be configured for this OS image without domain portion
 -s <ssh key>              Use this ssh key instead of the configured default ($v_sshkey) for user $v_username
+-d <DHCP Static file>     Use this file to gather static IP settings for DHCPcd conf.
+                          This file will be __appended__ to /etc/dhcpcd.conf and stored as /boot/fixed.ip for the
+                          provisioner.
 
 Auto provision options:
 -r <GitHub Repository>    GitHub Repository containing the provisioning code
@@ -43,7 +46,7 @@ EOF
   exit ${1:-0}
 }
 
-while getopts I:T:H:s:r:k:p:P:ah opt; do
+while getopts I:T:H:s:r:k:p:P:ad:h opt; do
   case $opt in
   I)
     v_sourceimage=$OPTARG
@@ -71,6 +74,9 @@ while getopts I:T:H:s:r:k:p:P:ah opt; do
     ;;
   a)
     v_autoprovision=true
+    ;;
+  d)
+    v_dhcpcd_file=$OPTARG
     ;;
   h)
     usage
@@ -110,6 +116,16 @@ function prepare_bootfs() {
 
   echo "Enabling SSH"
   touch "$fs_base/ssh"
+
+  if [ -n "$v_dhcpcd_file" ]; then
+    echo "Copying dhcpcd static IP configuration to /boot/fixed.ip"
+    if [ ! -f "$v_dhcpcd_file" ]; then
+      echo "ERROR: $v_dhcpcd_file could not be found."
+      exit 1
+    fi
+    cp "$v_dhcpcd_file" ${fs_base}/fixed.ip
+  fi
+
 }
 
 function prepare_rootfs() {
@@ -133,6 +149,16 @@ function prepare_rootfs() {
   else
     echo "No hostname set. Skipping configuration."
   fi
+
+  if [ -n "$v_dhcpcd_file" ]; then
+    echo "Appending dhcpcd static IP configuration to /etc/dhcpcd.conf"
+    if [ ! -f "$v_dhcpcd_file" ]; then
+      echo "ERROR: $v_dhcpcd_file could not be found."
+      exit 1
+    fi
+    cat "$v_dhcpcd_file" >> ${fs_base}/etc/dhcpcd.conf
+  fi
+
 
   echo "Setting systemd default.target to multi-user.target"
   cd "${fs_base}/etc/systemd/system" &&
@@ -232,3 +258,5 @@ function main() {
 
 check_if_sudo
 main
+
+echo "Now run \"sudo $0/burnRaspiImage.sh -I $v_targetimage -D [StorageDevice]\" to transfer the image."
