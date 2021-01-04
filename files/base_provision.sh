@@ -16,16 +16,19 @@ fi
 echo "Checking if Ansible is installed"
 if [ $(which ansible-playbook | wc -l) -eq 0 ]; then
   echo "Installing Ansible"
+  # Always define full service name, no wildcards!
+  check_service="apt-daily.service apt-daily-upgrade.service"
 
-  # wait until `apt-get updated` is done to prevent race condition with apt-daily.service
-  while ! (systemctl list-units --all apt-daily.service | egrep -q '(dead|failed)')
-  do
+  # Check if any of the defined services are not in state inactive and wait until all are
+  while [ ! $(systemctl list-units --state=inactive ${check_service} | egrep "[^\s]*service\s*" | wc -l) -eq $(echo $check_service | wc -w) ]; do
     echo "Waiting to get APT lock..."
-    sleep 1;
+    sleep 2;
   done
-  sudo apt install -y ansible
+
+  # Only after all services are inactive start installing Ansible
+  sudo apt-get install -y ansible
 else
-  echo "Nothing to do. Ansible was found."
+  echo "Ansible is installed. Nothing to do."
 fi
 
 echo "Running Playbook "${provision_basedir}/${provision_playbook}""
