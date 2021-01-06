@@ -53,7 +53,8 @@ if [[ "$USER" != "root" ]]; then
 fi
 
 echo "Disk information:"
-parted $v_disk unit GB print
+parted -s $v_disk unit GB print
+[ $? -ne 0 ] && exit
 
 read -t 30 -p "Are you sure you want to write $v_image to $v_disk? This will also wipe existing filesystems on the disk. ('yes'/'no'): " REPLY
 if [ "$(echo "$REPLY" | tr '[:upper:]' '[:lower:]')" != "yes" ]; then
