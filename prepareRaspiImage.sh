@@ -259,4 +259,4 @@ function main() {
 check_if_sudo
 main
 
-echo "Now run \"sudo $0/burnRaspiImage.sh -I $v_targetimage -D [StorageDevice]\" to transfer the image."
+echo "Now run \"sudo ${scripts_basedir}/burnRaspiImage.sh -I $v_targetimage -D [StorageDevice]\" to transfer the image."
