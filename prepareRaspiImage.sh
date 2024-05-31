@@ -9,7 +9,8 @@ working_basedir="$(pwd)"
 
 v_userhome=$(eval echo "~${SUDO_USER}")
 v_sshkey="${v_userhome}/.ssh/id_rsa"
-v_username=pi
+v_user_pi=pi
+v_user_new=christian
 
 v_autoprovision=false
 v_provision_gh_repo=""
@@ -29,7 +30,8 @@ Image options:
 
 RaspberryPi settings:
 -H <hostname>             Hostname to be configured for this OS image without domain portion
--s <ssh key>              Use this ssh key instead of the configured default ($v_sshkey) for user $v_username
+-s <ssh key>              Use this ssh key instead of the configured default ($v_sshkey) for user $v_user_new
+-u <username>             New custom username on the RaspberryPi. Defaults to $v_user_new
 -d <DHCP Static file>     Use this file to gather static IP settings for DHCPcd conf.
                           This file will be __appended__ to /etc/dhcpcd.conf and stored as /boot/fixed.ip for the
                           provisioner.
@@ -46,7 +48,7 @@ EOF
   exit ${1:-0}
 }
 
-while getopts I:T:H:s:r:k:p:P:ad:h opt; do
+while getopts I:T:H:s:r:k:p:P:ad:u:h opt; do
   case $opt in
   I)
     v_sourceimage=$OPTARG
@@ -77,6 +79,9 @@ while getopts I:T:H:s:r:k:p:P:ad:h opt; do
     ;;
   d)
     v_dhcpcd_file=$OPTARG
+    ;;
+  u)
+    v_user_new=${OPTARG::?Missing username}
     ;;
   h)
     usage
@@ -126,19 +131,24 @@ function prepare_bootfs() {
     cp "$v_dhcpcd_file" ${fs_base}/fixed.ip
   fi
 
+  # This will rename user pi to the new username and disable password login
+  if [ -n "$v_user_new" ]; then
+    echo "Setting new username to $v_user_new ($v_user_pi will be renamed on first boot)"
+    echo "$v_user_new:!" > ${fs_base}/userconf
+  fi
 }
 
 function prepare_rootfs() {
   local fs_base=$1
   echo "Preparing root filesystem"
 
-  user_uid=$(stat --printf "%u" ${fs_base}/home/$v_username)
-  user_gid=$(stat --printf "%g" ${fs_base}/home/$v_username)
+  user_uid=$(stat --printf "%u" ${fs_base}/home/$v_user_pi)
+  user_gid=$(stat --printf "%g" ${fs_base}/home/$v_user_pi)
 
-  echo "Copying SSH public key from $v_sshkey to user ${v_username}"
-  mkdir -p "${fs_base}/home/${v_username}/.ssh"
-  ssh-keygen -y -f "${v_sshkey}" >"${fs_base}/home/pi/.ssh/authorized_keys"
-  set_ssh_permissions
+  echo "Copying SSH public key from $v_sshkey to user ${v_user_pi}"
+  mkdir -p "${fs_base}/home/${v_user_pi}/.ssh"
+  ssh-keygen -y -f "${v_sshkey}" >"${fs_base}/home/${v_user_pi}/.ssh/authorized_keys"
+  set_ssh_permissions ${v_user_pi}
 
   echo "Enabling PubKey authentication for SSH"
   sed -i -e 's/^.*PubkeyAuthentication.*$/PubkeyAuthentication yes/' "${fs_base}/etc/ssh/sshd_config"
@@ -175,23 +185,23 @@ function prepare_rootfs() {
     echo "github_repo=$v_provision_gh_repo" >"${fs_base}/.provision.conf"
     echo "provision_basedir=$v_provision_basedir" >>"${fs_base}/.provision.conf"
     echo "provision_playbook=$v_provision_playbook" >>"${fs_base}/.provision.conf"
-    echo "provision_user=${v_username}" >>"${fs_base}/.provision.conf"
+    echo "provision_user=${v_user_pi}" >>"${fs_base}/.provision.conf"
 
     if [ -n "$v_provision_gh_key" ]; then
       keyname=$(basename $v_provision_gh_key)
       echo "Copying GitHub deploy key"
-      cp "$v_provision_gh_key" "${fs_base}/home/$v_username/.ssh/$keyname"
+      cp "$v_provision_gh_key" "${fs_base}/home/$v_user_pi/.ssh/$keyname"
       echo "Setting ssh config to use the deploy key with GitHub"
-      echo -e "Host github.com\n  User git\n  IdentityFile /home/$v_username/.ssh/$keyname" >>"${fs_base}/home/$v_username/.ssh/config"
-      set_ssh_permissions
+      echo -e "Host github.com\n  User git\n  IdentityFile /home/$v_user_pi/.ssh/$keyname" >>"${fs_base}/home/$v_user_pi/.ssh/config"
+      set_ssh_permissions $v_user_pi
     else
       echo "No GitHub deploy key specified. The provisioner GitHub repository must be set to public, otherwise cloning the repo will fail."
     fi
 
     if [[ $v_provision_gh_repo =~ github.com:.*.git$ ]]; then
       echo "Adding GitHub ssh fingerprint to known_hosts file"
-      ssh-keyscan github.com >> "${fs_base}/home/$v_username/.ssh/known_hosts"
-      set_ssh_permissions
+      ssh-keyscan github.com >> "${fs_base}/home/$v_user_pi/.ssh/known_hosts"
+      set_ssh_permissions $v_user_pi
     fi
 
     echo "Copying provisioner service file"

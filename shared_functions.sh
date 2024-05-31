@@ -5,7 +5,11 @@ declare -A fstypes
 fstypes=(["Linux"]="" ["W95 FAT32 (LBA)"]="vfat")
 
 function set_ssh_permissions() {
-  chown -R ${user_uid}:${user_gid} "${fs_base}/home/$v_username/.ssh"
+  local v_username="${1:?Missing username}"
+  local user_uid=$(stat --printf "%u" ${fs_base}/home/${v_username})
+  local user_gid=$(stat --printf "%g" ${fs_base}/home/${v_username})
+
+  chown -R ${user_uid}:${user_gid} "${fs_base}/home/${v_username}/.ssh"
   chmod -R 700 "${fs_base}/home/${v_username}/.ssh"
 }
 
@@ -42,13 +46,13 @@ function mount_filesystem() {
 
 function unmout_filesystem() {
   local mountpoint=$1
-  sync -f "${mountpoint}"
-  if [ $(fuser -Mm "${mountpoint}" 2>/dev/null | wc -w) -gt 0 ]; then
+  while [ $(fuser -Mm "${mountpoint}" 2>/dev/null | wc -w) -gt 0 ]; do
     echo "Warning: There are active processes on the filesystem mounted at $mountpoint:"
     fuser -Mm $mountpoint
+    echo "Warning: Trying to kill processes"
     fuser -Mk $mountpoint
-  fi
-
+  done
+  sync -f "${mountpoint}"
   umount -f $mountpoint
 }
 
