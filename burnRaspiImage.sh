@@ -67,6 +67,7 @@ unset REPLY
 if [ $(lsblk ${v_disk} --noheadings --raw | grep -c "part\s*$") -gt 0 ]; then
   echo "WARNING: ${v_disk} is not clean. Cleaning disk..."
   sfdisk --delete $v_disk
+  sync $v_disk
 fi
 
 echo "Writing image to disk"
